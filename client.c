@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#define RCVBUFSIZE 8
+#include <fcntl.h>
 
 int main(int argc, char *argv[])
 {
@@ -13,10 +13,14 @@ int main(int argc, char *argv[])
     int datasock;
     int connection;
     struct sockaddr_in servaddr;
+    struct stat obj;
     struct sockaddr_in dataaddr;
     short servport;
     short dataport;
     char *serverip;
+    char *command[100];
+    char *p;
+    char buf[100];
 
     serverip = "127.0.0.1";
     servport = 21;
@@ -48,11 +52,27 @@ int main(int argc, char *argv[])
     }
     else printf("Koneksi Berhasil\n");
 
-    dataport = 20;
-    bzero(&dataaddr, sizeof(dataaddr));
-    dataaddr.sin_family = AF_INET;
-    dataaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    dataaddr.sin_port = htons(dataport);
 
-    printf("%d  %s", argc, argv[0]);
+    int filehandle, size, status;
+    char filename[20];
+    printf("Enter filename to put to server: ");
+          scanf("%s", filename);
+	  filehandle = open(filename, O_RDONLY);
+          if(filehandle == -1)
+            {
+              printf("No such file on the local directory\n\n");
+              return 0;
+            }
+          strcpy(buf, "put ");
+	  strcat(buf, filename);
+	  send(sock, buf, 100, 0);
+	  stat(filename, &obj);
+	  size = obj.st_size;
+	  send(sock, &size, sizeof(int), 0);
+	  sendfile(sock, filehandle, NULL, size);
+	  recv(sock, &status, sizeof(int), 0);
+	  if(status)
+	    printf("File stored successfully\n");
+	  else
+	    printf("File failed to be stored to remote machine\n");
 }
