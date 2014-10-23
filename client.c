@@ -12,7 +12,6 @@ int main(int argc, char *argv[])
 {
     int sock;
     int datasock;
-    int connection;
     struct sockaddr_in servaddr;
     struct stat obj;
     struct sockaddr_in dataaddr;
@@ -34,6 +33,11 @@ int main(int argc, char *argv[])
     }
     else printf("Berhasil Membuat Socket\n");
 
+    if ((datasock = socket(AF_INET, SOCK_STREAM,IPPROTO_TCP)) < 0)
+    {
+    	perror(strerror(errno));
+    	exit(-1);
+    }
 
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
@@ -45,20 +49,20 @@ int main(int argc, char *argv[])
         perror(strerror(errno));
         exit(-1);
     }
-    else printf("Koneksi Berhasil\n");
 
     dataport = 20;
     bzero(&dataaddr, sizeof(dataaddr));
     dataaddr.sin_family = AF_INET;
     dataaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     dataaddr.sin_port = htons(servport);
+    printf("Koneksi Berhasil\n");
 
     bind(datasock,(struct sockaddr *) &dataaddr, sizeof(dataaddr));
     listen(datasock, 3);
 
     p = strcpy(command, "USER msacred67\r\n");
     send(sock, command, strlen(command), 0);
-    p= strcpy(command, "PASS dilarangmasuk\r\n");
+    p = strcpy(command, "PASS dilarangmasuk\r\n");
     send(sock, command, strlen(command), 0);
 
     int filehandle, size, status,abc;
@@ -85,16 +89,15 @@ int main(int argc, char *argv[])
 	  recv(sock, f, size, 0);
 	  while(1)
 	    {
-	      filehandle = open(filename, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	      filehandle = open(filename, O_CREAT | O_EXCL | O_WRONLY);
 	      if(filehandle == -1)
 		{
 		  sprintf(filename + strlen(filename), "%d", 1);
 		}
 	      else break;
 	    }
-	  write(filehandle, f, size, 0);
+	  write(filehandle, f, size);
 	  close(filehandle);
-	  system(buf);
 	  break;
 	case 2:
 	  printf("Masukkan nama file: ");
